@@ -23,7 +23,13 @@ import matplotlib
 
 def parse_args_and_config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--baseconfig", type=str, default="configs/base.json", help="JSON file for creating model and diffusion")
+    parser.add_argument(
+        "-c",
+        "--baseconfig",
+        type=str,
+        default="configs/base.json",
+        help="JSON file for creating model and diffusion",
+    )
     parser.add_argument("-dr", "--dataroot", type=str, default="data")  # dataroot with
     parser.add_argument("-rs", "--resume_state", type=str, default="checkpoints/diffusion/I190000_E97")
 
