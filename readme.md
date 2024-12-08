@@ -16,13 +16,15 @@ Li Pang, Xiangyu Rui, Long Cui, Hongzhong Wang, Deyu Meng, Xiangyong Cao
 
 ## Environment
 ```bash
-conda create -n hirdiff python=3.9
+conda create -n hirdiff python=3.12
 conda activate hirdiff
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 pip3 install -r requirements.txt
 ```
 
 
 ## HSI Restoration
+
 ### Download the pretrained diffusion model
 downloading the pretrained diffusion model [I190000_E97_gen.pth](https://www.dropbox.com/sh/z6k5ixlhkpwgzt5/AAApBOGEUhHa4qZon0MxUfmua?dl=0) provided by [ddpm-cd](https://github.com/wgcban/ddpm-cd) and put the model into *checkpoints\diffusion*
 
