@@ -106,27 +106,27 @@ if __name__ == "__main__":
 
     if opt['dataname'] == 'Houston':
         if opt['task'] == 'denoise':
-            opt['dataroot'] = f'../data/Houston18/test/gauss_{opt["task_params"]}/Houston_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Houston18/test/gauss_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/Houston18/test/gauss_sr_{opt["task_params"]}/Houston_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Houston18/test/gauss_sr_{opt["task_params"]}/Houston_channel_cropped.mat'
         if opt['task'] == 'inpainting':
-            opt['dataroot'] = f'../data/Houston18/test/gauss_inpainting_{opt["task_params"]}/Houston_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Houston18/test/gauss_inpainting_{opt["task_params"]}/Houston_channel_cropped.mat'
 
     if opt['dataname'] == 'WDC':
         if opt['task'] == 'denoise':
-            opt['dataroot'] = f'../data/WDC/test/gauss_{opt["task_params"]}/wdc_cropped.mat'
+            opt['dataroot'] = f'./data/WDC/test/gauss_{opt["task_params"]}/wdc_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/WDC/test/gauss_sr_{opt["task_params"]}/wdc_cropped.mat'
+            opt['dataroot'] = f'./data/WDC/test/gauss_sr_{opt["task_params"]}/wdc_cropped.mat'
         if opt['task'] == 'inpainting':
-            opt['dataroot'] = f'../data/WDC/test/gauss_inpainting_{opt["task_params"]}/wdc_cropped.mat'
+            opt['dataroot'] = f'./data/WDC/test/gauss_inpainting_{opt["task_params"]}/wdc_cropped.mat'
 
     if opt['dataname'] == 'Salinas':
         if opt['task'] == 'denoise':
-            opt['dataroot'] = f'../data/Salinas/test/gauss_{opt["task_params"]}/Salinas_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Salinas/test/gauss_{opt["task_params"]}/Salinas_channel_cropped.mat'
         if opt['task'] == 'sr':
-            opt['dataroot'] = f'../data/Salinas/test/gauss_sr_{opt["task_params"]}/Salinas_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Salinas/test/gauss_sr_{opt["task_params"]}/Salinas_channel_cropped.mat'
         if opt['task'] == 'inpainting':
-            opt['dataroot'] = f'../data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
+            opt['dataroot'] = f'./data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
 
 
     data = sio.loadmat(opt['dataroot'])
