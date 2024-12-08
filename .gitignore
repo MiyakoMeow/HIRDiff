@@ -10,3 +10,7 @@ data/*.mat
 data/*/*.mat
 data/*/*/*.mat
 data/*/*/*/*.mat
+
+# Virtual env
+venv/*
+venv-*/*
