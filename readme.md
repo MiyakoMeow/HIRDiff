@@ -15,6 +15,10 @@ Li Pang, Xiangyu Rui, Long Cui, Hongzhong Wang, Deyu Meng, Xiangyong Cao
 </div>
 
 ## Environment
+
+- CUDA Toolkit Installer for Windows: [CUDA Toolkit 12.6.3_561.17 Download Link](https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_561.17_windows.exe)
+
+- After Cloning this Repo:
 ```bash
 conda create -n hirdiff python=3.12
 conda activate hirdiff
