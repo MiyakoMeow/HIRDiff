@@ -1,0 +1,12 @@
+# Model files: Zip
+HIRDIFF-*.zip
+
+# Model files
+checkpoints/*.pth
+checkpoints/*/*.pth
+
+# Data files
+data/*.mat
+data/*/*.mat
+data/*/*/*.mat
+data/*/*/*/*.mat
