@@ -1,0 +1,14 @@
+[project]
+name = "HIRDIFF"
+version = "0.1.0"
+description = ""
+authors = [{ name = "AuthorName", email = "author@example.com" }]
+dependencies = [
+    "imgvision",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "scikit-image",
+    "torch",
+    "tqdm",
+]
