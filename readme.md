@@ -25,6 +25,29 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 pip3 install -r requirements.txt
 ```
 
+- Matlab Engine:
+
+Matlab is required to be installed for your computer.
+
+Then install `matlabengine`:
+
+```bash
+pip3 install matlabengine
+```
+
+This installation may fail because of older matlab version.
+If there has tips like `The found version were (version)`, run next command:
+
+```bash
+pip3 install matlabengine=(version)
+```
+
+For example (For Matlab R2023b):
+
+```bash
+pip3 install matlabengine=23
+```
+
 ## HSI Restoration
 
 ### Download the pretrained diffusion model
