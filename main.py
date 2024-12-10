@@ -1,24 +1,18 @@
 import argparse
 import os
 import time
+import warnings
+from math import sqrt, log
 
-from utility import *
 import numpy as np
 import torch
-import torch as th
-import torch.nn.functional as nF
-from pathlib import Path
 from guided_diffusion import utils
 from guided_diffusion.create import create_model_and_diffusion_RS
-import scipy.io as sio
+import scipy
 from collections import OrderedDict
-from os.path import join
-from skimage.metrics import peak_signal_noise_ratio as PSNR
-from skimage.metrics import structural_similarity as SSIM
 from guided_diffusion.core import imresize, blur_kernel
-from math import sqrt, log
-import warnings
-import matplotlib
+
+from utility import *
 
 
 def parse_args_and_config():
@@ -73,10 +67,10 @@ if __name__ == "__main__":
     gpu_ids = opt["gpu_ids"]
     if gpu_ids:
         os.environ["CUDA_VISIBLE_DEVICES"] = gpu_ids
-        device = th.device("cuda")
+        device = torch.device("cuda")
         print("export CUDA_VISIBLE_DEVICES=" + gpu_ids)
     else:
-        device = th.device("cpu")
+        device = torch.device("cpu")
         print("use cpu")
 
     ## create model and diffusion process
@@ -85,7 +79,7 @@ if __name__ == "__main__":
     ## load model
     load_path = opt["resume_state"]
     gen_path = "{}_gen.pth".format(load_path)
-    cks = th.load(gen_path)
+    cks = torch.load(gen_path)
     new_cks = OrderedDict()
     for k, v in cks.items():
         newkey = k[11:] if k.startswith("denoise_fn.") else k
@@ -95,8 +89,8 @@ if __name__ == "__main__":
     model.eval()
 
     ## seed
-    seeed = opt["seed"]
-    seed_everywhere(seeed)
+    opt_seed = opt["seed"]
+    seed_everywhere(opt_seed)
 
     ## params
     param = dict()
@@ -128,7 +122,7 @@ if __name__ == "__main__":
         if opt["task"] == "inpainting":
             opt["dataroot"] = f'./data/Salinas/test/gauss_inpainting_{opt["task_params"]}/Salinas_channel_cropped.mat'
 
-    data = sio.loadmat(opt["dataroot"])
+    data = scipy.io.loadmat(opt["dataroot"])
     data["input"] = torch.from_numpy(data["input"]).permute(2, 0, 1).unsqueeze(0).float().to(device)
     data["gt"] = torch.from_numpy(data["gt"]).permute(2, 0, 1).unsqueeze(0).float().to(device)
     Ch, ms = data["gt"].shape[1], data["gt"].shape[2]
@@ -143,15 +137,15 @@ if __name__ == "__main__":
         sig = sqrt(4**2 / (8 * log(2)))
         scale = data["scale"].item()
         kernel = blur_kernel(k_s, sig)
-        kernel = th.from_numpy(kernel).repeat(Ch, 1, 1, 1).to(device)
-        blur = partial(nF.conv2d, weight=kernel, padding=int((k_s - 1) / 2), groups=Ch)
+        kernel = torch.from_numpy(kernel).repeat(Ch, 1, 1, 1).to(device)
+        blur = partial(torch.nn.functional.conv2d, weight=kernel, padding=int((k_s - 1) / 2), groups=Ch)
         down = partial(imresize, scale=scale)
         model_condition["transform"] = lambda x: down(blur(x))
     else:
         model_condition["transform"] = lambda x: x
 
     time_start = time.time()
-    u, s, v = th.svd(model_condition["input"].reshape(1, Ch, -1).permute(0, 2, 1))
+    u, s, v = torch.svd(model_condition["input"].reshape(1, Ch, -1).permute(0, 2, 1))
     E = v[..., :, : Rr * K]
 
     if not opt["no_rrqr"]:
@@ -160,10 +154,10 @@ if __name__ == "__main__":
         eng = matlab.engine.start_matlab()
         eng.cd(r"matlab")
         res = eng.sRRQR_rank(E[0].cpu().numpy().T, 1.2, 3, nargout=3)
-        param["Band"] = th.Tensor(np.sort(list(res[-1][0][:3]))).type(th.int).to(device) - 1
+        param["Band"] = torch.Tensor(np.sort(list(res[-1][0][:3]))).type(torch.int).to(device) - 1
 
     else:
-        param["Band"] = th.Tensor([Ch * i // (K * Rr + 1) for i in range(1, K * Rr + 1)]).type(th.int).to(device)
+        param["Band"] = torch.Tensor([Ch * i // (K * Rr + 1) for i in range(1, K * Rr + 1)]).type(torch.int).to(device)
     print(param["Band"])
 
     denoise_model = None
@@ -186,8 +180,8 @@ if __name__ == "__main__":
         )
         K = int(len(param["Band"]) / Rr)
         sample = (sample + 1) / 2
-        im_out = th.matmul(E, sample.reshape(opt["batch_size"], Rr * K, -1)).reshape(opt["batch_size"], Ch, ms, ms)
-        im_out = th.clip(im_out, 0, 1)
+        im_out = torch.matmul(E, sample.reshape(opt["batch_size"], Rr * K, -1)).reshape(opt["batch_size"], Ch, ms, ms)
+        im_out = torch.clip(im_out, 0, 1)
         time_end = time.time()
         time_cost = time_end - time_start
 

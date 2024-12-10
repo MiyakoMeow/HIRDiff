@@ -3,16 +3,14 @@ Logger copied from OpenAI baselines to avoid extra RL-based dependencies:
 https://github.com/openai/baselines/blob/ea25b9e8b234e6ee1bca43083f8f3cf974143998/baselines/logger.py
 """
 
-import matplotlib.pyplot as plt
-import os
-import os.path as osp
-import json
 import datetime
-from collections import OrderedDict
-import torch
-import torch.nn.functional as F
-import numpy as np
+import json
 import math
+import os
+from collections import OrderedDict
+
+import numpy as np
+import torch
 
 
 def _warmup_beta(linear_start, linear_end, n_timestep, warmup_frac):
@@ -158,7 +156,7 @@ def harr_downsampling(img: torch.Tensor):
     haar_weights[3, 0, 0, 1] = -1
 
     haar_weights = torch.cat([haar_weights] * channel_in, 0).to(img.device)
-    out = F.conv2d(img, haar_weights, bias=None, stride=2, groups=channel_in) / 4.0
+    out = torch.nn.functional.conv2d(img, haar_weights, bias=None, stride=2, groups=channel_in) / 4.0
     out = out.reshape([img.shape[0], channel_in, 4, img.shape[2] // 2, img.shape[3] // 2])
     out = torch.transpose(out, 1, 2)
 
@@ -175,7 +173,7 @@ def mkdirs(paths):
 
 
 def get_timestamp():
-    return datetime.now().strftime("%y%m%d_%H%M%S")
+    return datetime.datetime.now().strftime("%y%m%d_%H%M%S")
 
 
 def parse(args):

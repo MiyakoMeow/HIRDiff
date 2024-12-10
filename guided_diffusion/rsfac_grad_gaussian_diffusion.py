@@ -4,20 +4,14 @@ https://github.com/HJ-harry/MCG_diffusion/blob/main/guided_diffusion/gaussian_di
 The conditions are changed and coefficient matrix estimation is added.
 """
 
-import matplotlib.pyplot as plt
 import enum
-import math
-from skimage.metrics import peak_signal_noise_ratio as compare_psnr
+
+import matplotlib.pyplot as plt
 import numpy as np
-import torch as th
-from torch.autograd import grad
-import torch.nn.functional as nF
-from functools import partial
-import torch.nn.parameter as Para
+import torch
+
 from .utils import *
-from os.path import join as join
 from utility import *
-from skimage.restoration import denoise_nl_means, estimate_sigma
 
 
 class ModelMeanType(enum.Enum):
@@ -54,10 +48,10 @@ class LossType(enum.Enum):
         return self == LossType.KL or self == LossType.RESCALED_KL
 
 
-class Param(th.nn.Module):
+class Param(torch.nn.Module):
     def __init__(self, data):
         super(Param, self).__init__()
-        self.E = Para.Parameter(data=data)
+        self.E = torch.nn.parameter.Parameter(data=data)
 
     def forward(
         self,
@@ -148,7 +142,7 @@ class GaussianDiffusion:
         if noise is not None:
             img = noise
         else:
-            img = th.randn((Bb, Rr, Hh, Ww), device=device)  # 初始大小是[B, r, H, W]
+            img = torch.randn((Bb, Rr, Hh, Ww), device=device)  # 初始大小是[B, r, H, W]
 
         if step is None:
             step = self.num_timesteps
@@ -159,27 +153,27 @@ class GaussianDiffusion:
         pbar = tqdm(enumerate(zip(indices, indices_next)), total=len(indices))
 
         # coefficient matrix estimation: Eq.(14)
-        u, s, v = th.svd(model_condition["input"].reshape(Bb, Cc, -1).permute(0, 2, 1))
+        u, s, v = torch.svd(model_condition["input"].reshape(Bb, Cc, -1).permute(0, 2, 1))
         v[:, :, 1] *= -1
         E = v[..., :, :3]
-        coef = th.inverse(th.index_select(E, 1, param["Band"]))
+        coef = torch.inverse(torch.index_select(E, 1, param["Band"]))
         E = E @ coef
 
         self.best_result, self.best_psnr = None, 0
         norm_list, psnr_list, result_list = [], [], []
         alphas_bar_list = []
         for iteration, (i, j) in pbar:
-            t = th.tensor([i] * shape[0], device=device)
-            t_next = th.tensor([j] * shape[0], device=device)
+            t = torch.tensor([i] * shape[0], device=device)
+            t_next = torch.tensor([j] * shape[0], device=device)
             # re-instantiate requires_grad for backpropagation
             img = img.requires_grad_()
 
             x, eps = img, 1e-9
             B = x.shape[0]
 
-            alphas_bar = th.FloatTensor([self.alphas_cumprod_prev[int(t.item()) + 1]]).repeat(B, 1).to(x.device)
+            alphas_bar = torch.FloatTensor([self.alphas_cumprod_prev[int(t.item()) + 1]]).repeat(B, 1).to(x.device)
             alphas_bar_next = (
-                th.FloatTensor([self.alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(x.device)
+                torch.FloatTensor([self.alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(x.device)
             )
 
             # DDIM: Algorithm 1 in the paper
@@ -190,13 +184,13 @@ class GaussianDiffusion:
 
             # update
             xhat = (pred_xstart + 1) / 2
-            xhat = th.matmul(E, xhat.reshape(Bb, Rr, -1)).reshape(*shape)
+            xhat = torch.matmul(E, xhat.reshape(Bb, Rr, -1)).reshape(*shape)
 
             # parameters
             eta = 0
             c1 = eta * ((1 - alphas_bar / alphas_bar_next) * (1 - alphas_bar_next) / (1 - alphas_bar + eps)).sqrt()
             c2 = ((1 - alphas_bar_next) - c1**2).sqrt()
-            xt_next = alphas_bar_next.sqrt() * pred_xstart + c1 * th.randn_like(x) + c2 * model_output
+            xt_next = alphas_bar_next.sqrt() * pred_xstart + c1 * torch.randn_like(x) + c2 * model_output
 
             param["iteration"] = iteration
             if param["task"] == "sr":
@@ -208,7 +202,7 @@ class GaussianDiffusion:
             else:
                 raise ValueError("invalid task name")
 
-            norm_gradX = grad(outputs=loss_condition, inputs=img)[0]
+            norm_gradX = torch.autograd.grad(outputs=loss_condition, inputs=img)[0]
             xt_next = xt_next - norm_gradX
             del norm_gradX
 
@@ -245,16 +239,16 @@ class GaussianDiffusion:
         input = model_condition["input"]
         weight = 1
         loss_1 = (
-            param["eta1"] * (th.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / xhat.numel()
+            param["eta1"] * (torch.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / xhat.numel()
         )
 
         # regularization term
         weight_dx, weight_dy, weight_dz = 1, 1, 1
         xhat_dx, xhat_dy, xhat_dz = diff_3d(xhat)
         loss_2 = (
-            param["eta2"] * th.norm(weight_dx * xhat_dx, p=1)
-            + param["eta2"] * th.norm(weight_dy * xhat_dy, p=1)
-            + param["eta2"] * th.norm(weight_dz * xhat_dz, p=1)
+            param["eta2"] * torch.norm(weight_dx * xhat_dx, p=1)
+            + param["eta2"] * torch.norm(weight_dy * xhat_dy, p=1)
+            + param["eta2"] * torch.norm(weight_dz * xhat_dz, p=1)
         ) / xhat.numel()
 
         loss_condition = loss_1 + loss_2
@@ -266,15 +260,15 @@ class GaussianDiffusion:
         # fidelity term
         weight = model_condition["mask"]
         frac = weight.sum()
-        loss_1 = param["eta1"] * (th.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / frac
+        loss_1 = param["eta1"] * (torch.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / frac
 
         weight_dx, weight_dy, weight_dz = 1, 1, 1
         xhat_dx, xhat_dy, xhat_dz = diff_3d(xhat, keepdim=False)
         norm_rank = 1
         loss_2 = (
-            param["eta2"] * th.norm(weight_dx * xhat_dx, p=norm_rank) ** norm_rank / xhat_dx.numel()
-            + param["eta2"] * th.norm(weight_dy * xhat_dy, p=norm_rank) ** norm_rank / xhat_dy.numel()
-            + param["eta2"] * th.norm(weight_dz * xhat_dz, p=norm_rank) ** norm_rank / xhat_dz.numel()
+            param["eta2"] * torch.norm(weight_dx * xhat_dx, p=norm_rank) ** norm_rank / xhat_dx.numel()
+            + param["eta2"] * torch.norm(weight_dy * xhat_dy, p=norm_rank) ** norm_rank / xhat_dy.numel()
+            + param["eta2"] * torch.norm(weight_dz * xhat_dz, p=norm_rank) ** norm_rank / xhat_dz.numel()
         )
 
         loss_condition = loss_1 + loss_2
@@ -286,7 +280,7 @@ class GaussianDiffusion:
         # fidelity term
         weight = 1
         loss_1 = (
-            param["eta1"] * (th.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / xhat.numel()
+            param["eta1"] * (torch.norm(weight * (input - model_condition["transform"](xhat)), p=2)) ** 2 / xhat.numel()
         )
 
         # regularization term
@@ -311,9 +305,9 @@ class GaussianDiffusion:
 
         xhat_dx, xhat_dy, xhat_dz = diff_3d(xhat)
         loss_2 = (
-            param["eta2"] * th.norm(weight_dx * xhat_dx, p=1)
-            + param["eta2"] * th.norm(weight_dy * xhat_dy, p=1)
-            + param["eta2"] * th.norm(weight_dz * xhat_dz, p=1)
+            param["eta2"] * torch.norm(weight_dx * xhat_dx, p=1)
+            + param["eta2"] * torch.norm(weight_dy * xhat_dy, p=1)
+            + param["eta2"] * torch.norm(weight_dz * xhat_dz, p=1)
         ) / xhat.numel()
 
         loss_condition = loss_1 + loss_2
@@ -331,9 +325,9 @@ class GaussianDiffusion:
     ):
         # predict x_start
         B = x.shape[0]
-        noise_level = th.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t.item()) + 1]]).repeat(B, 1).to(x.device)
+        noise_level = torch.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t.item()) + 1]]).repeat(B, 1).to(x.device)
         noise_level_next = (
-            th.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(x.device)
+            torch.FloatTensor([self.sqrt_alphas_cumprod_prev[int(t_next.item()) + 1]]).repeat(B, 1).to(x.device)
         )
         model_output = model(x, noise_level)
         pred_xstart = (x - model_output * (1 - noise_level).sqrt()) / noise_level.sqrt()
@@ -344,6 +338,6 @@ class GaussianDiffusion:
         eta = 0
         c1 = eta * ((1 - noise_level / noise_level_next) * (1 - noise_level_next) / (1 - noise_level + eps)).sqrt()
         c2 = ((1 - noise_level_next) - c1**2).sqrt()
-        xt_next = noise_level_next.sqrt() * pred_xstart + c1 * th.randn_like(x) + c2 * model_output
+        xt_next = noise_level_next.sqrt() * pred_xstart + c1 * torch.randn_like(x) + c2 * model_output
         out = {"sample": xt_next, "pred_xstart": pred_xstart}
         return out
