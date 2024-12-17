@@ -6,7 +6,7 @@ from math import sqrt, log
 
 import numpy as np
 import torch
-from guided_diffusion import utils
+from guided_diffusion import utils as gd_utils
 from guided_diffusion.create import create_model_and_diffusion_RS
 import scipy
 from collections import OrderedDict
@@ -55,8 +55,8 @@ def parse_args_and_config():
     args = parser.parse_args()
     args.eta1 *= 256 * 64
     args.eta2 *= 8 * 64
-    opt = utils.parse(args)
-    opt = utils.dict_to_nonedict(opt)
+    opt = gd_utils.parse(args)
+    opt = gd_utils.dict_to_nonedict(opt)
     return opt
 
 
