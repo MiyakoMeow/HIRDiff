@@ -15,3 +15,5 @@ data/*/*/*/*.mat
 venv/*
 venv-*/*
 
+# Python Cache
+__pycache__
