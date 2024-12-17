@@ -17,3 +17,6 @@ venv-*/*
 
 # Python Cache
 __pycache__
+
+# Jetbrains
+.idea/*
