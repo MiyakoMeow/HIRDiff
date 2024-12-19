@@ -14,6 +14,14 @@ from guided_diffusion.core import imresize, blur_kernel
 
 from utility import *
 
+from fun import fromAtoB
+from fun import sumZ
+from fun import pca
+from fun import meanZ
+from fun import pyvi
+from fun import pool
+from fun import cut
+
 
 def parse_args_and_config():
     parser = argparse.ArgumentParser()
@@ -125,6 +133,7 @@ if __name__ == "__main__":
     data = scipy.io.loadmat(opt["dataroot"])
     data["input"] = torch.from_numpy(data["input"]).permute(2, 0, 1).unsqueeze(0).float().to(device)
     data["gt"] = torch.from_numpy(data["gt"]).permute(2, 0, 1).unsqueeze(0).float().to(device)
+
     Ch, ms = data["gt"].shape[1], data["gt"].shape[2]
     Rr = 3  # spectral dimensironality of subspace
     K = 1
@@ -188,5 +197,12 @@ if __name__ == "__main__":
         psnr_current = np.mean(cal_bwpsnr(im_out, data["gt"]))
         if psnr_current < diffusion.best_psnr:
             im_out = diffusion.best_result
+
+
+
+        sumZ(data['gt'],25,50)
+        sumZ(im_out,25,50)
+
+
 
         print("best psnr: %.2f, best ssim: %.2f," % (MSIQA(im_out, data["gt"])[0], MSIQA(im_out, data["gt"])[1]))
