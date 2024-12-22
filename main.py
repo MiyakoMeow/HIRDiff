@@ -199,8 +199,10 @@ if __name__ == "__main__":
             im_out = diffusion.best_result
 
 
-
+        pyvi(data['gt'])
         sumZ(data['gt'],25,50)
+
+        pyvi(im_out)
         sumZ(im_out,25,50)
 
 

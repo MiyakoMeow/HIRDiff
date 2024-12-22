@@ -10,7 +10,7 @@ def cut(data,x):#切片绘画
     img = img[:, :, x]
 
     # 绘制该切片
-    plt.imshow(img.cpu().numpy())
+    plt.imshow(img.cpu().detach().numpy())
     plt.title("Cut"+x)
     plt.colorbar()
     plt.show()
@@ -58,7 +58,7 @@ def pyvi(data):#多维绘画
     img = img.permute(1, 2, 0)
 
     # 将数据转换为 PyVista 的网格格式
-    img = img.cpu().numpy()
+    img = img.cpu().detach().numpy()
     grid = pv.wrap(img)
 
     plotter = pv.Plotter()
@@ -119,7 +119,7 @@ def fromAtoB(data,A,B): #从A到B
 
     #从A到B
     plt.title("from"+str(A)+"to"+str(B))
-    plt.imshow(img[:,:,A:B].cpu().numpy())
+    plt.imshow(img[:,:,A:B].cpu().detach().numpy())
     plt.show()
 
 
@@ -143,7 +143,7 @@ def pool(data):#使用平均池化降维
     pooled_data = pooled_data.permute(1, 2, 0)
 
     # 绘制池化后的数据
-    plt.imshow(pooled_data[:, :, 0].cpu().numpy())
+    plt.imshow(pooled_data[:, :, 0].cpu().detach().numpy())
     plt.title("Pooled data")
     plt.colorbar()
     plt.show()
