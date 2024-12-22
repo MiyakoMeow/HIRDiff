@@ -14,7 +14,6 @@ from guided_diffusion.core import imresize, blur_kernel
 
 from utility import *
 
-from fun import fromAtoB
 from fun import sumZ
 from fun import pca
 from fun import meanZ
@@ -200,10 +199,20 @@ if __name__ == "__main__":
 
 
         pyvi(data['gt'])
-        sumZ(data['gt'],25,50)
+        sumZ(data['gt'],25,75)
+        cut(data['gt'],50)
+        pca(data['gt'])
+        meanZ(data['gt'],25,75)
+        pool(data['gt'])
+
+
+
+
+
+
 
         pyvi(im_out)
-        sumZ(im_out,25,50)
+        sumZ(im_out,25,75)
 
 
 

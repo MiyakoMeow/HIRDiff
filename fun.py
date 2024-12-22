@@ -11,13 +11,13 @@ def cut(data,x):#切片绘画
 
     # 绘制该切片
     plt.imshow(img.cpu().detach().numpy())
-    plt.title("Cut"+x)
+    plt.title("Cut"+str(x))
     plt.colorbar()
     plt.show()
 
 
 
-def pca(data):#PCA降维
+def pca(data):#PCA降维  可以显示原来的颜色
 
     #图像处理
     import matplotlib.pyplot as plt
@@ -67,16 +67,18 @@ def pyvi(data):#多维绘画
 
     #z轴切片
     slice = grid.slice(normal="z")
+
     slice.plot()
 
 
-def meanZ(data):#对z轴（第3维）进行求平均
+def meanZ(data,A,B):#对z轴（第3维）进行求平均
 
     # 图像处理
     import matplotlib.pyplot as plt
     import numpy as np
     img = np.squeeze(data)
     img = img.permute(1, 2, 0)
+    img = img[:, :, A:B]
 
     # 对z轴（第3维）进行求平均
     img = img.mean(dim=2)
@@ -107,20 +109,6 @@ def sumZ(data,A,B):#对 z 轴上的数据求和
     plt.colorbar()
     plt.show()
 
-
-
-def fromAtoB(data,A,B): #从A到B
-
-    # 图像处理
-    import matplotlib.pyplot as plt
-    import numpy as np
-    img = np.squeeze(data)
-    img = img.permute(1, 2, 0)
-
-    #从A到B
-    plt.title("from"+str(A)+"to"+str(B))
-    plt.imshow(img[:,:,A:B].cpu().detach().numpy())
-    plt.show()
 
 
 def pool(data):#使用平均池化降维
