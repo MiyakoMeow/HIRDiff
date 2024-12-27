@@ -160,7 +160,7 @@ class GaussianDiffusion:
         E = E @ coef
 
         self.best_result, self.best_psnr = None, 0
-        norm_list, psnr_list, result_list = [], [], []
+        norm_list, psnr_list, result_list, ssim_list= [], [], [], []
         alphas_bar_list = []
         for iteration, (i, j) in pbar:
             t = torch.tensor([i] * shape[0], device=device)
@@ -223,17 +223,40 @@ class GaussianDiffusion:
             psnr_list.append(psnr_current)
             pbar.set_description("%d/%d, psnr: %.2f" % (iteration, len(indices), psnr_list[-1]))
 
+            from skimage.metrics import structural_similarity as ssim
+            xhat_numpy = xhat.cpu().detach().numpy().squeeze()  # (B, C, H, W) -> (H, W)
+            gt_numpy = model_condition["gt"].cpu().numpy().squeeze()  # (B, C, H, W) -> (H, W)
+            ssim_value = ssim(xhat_numpy, gt_numpy, multichannel=True)
+            ssim_list.append(ssim_value)
+
+            pbar.set_description(
+                "%d/%d, psnr: %.2f, ssim: %.4f" % (iteration, len(indices), psnr_list[-1], ssim_list[-1]))
+
         # plt.plot(alphas_bar_list, c='r', label='alphas_bar')
         # plt.legend()
         # plt.show()
-
-        plt.plot(psnr_list)
-        plt.ylabel("PSNR")
-        plt.show()
-
+        #
+        # plt.plot(psnr_list)
+        # plt.ylabel("PSNR")
+        # plt.show()
+        #
         # plt.plot(norm_list)
         # plt.ylabel('guidance function loss')
         # plt.show()
+
+        # PSNR plot
+        plt.plot(psnr_list)
+        plt.ylabel("PSNR")
+        plt.title('PSNR over iterations')
+        plt.show()
+
+        # SSIM plot
+
+        plt.plot(ssim_list, c='g', label='SSIM')
+        plt.ylabel("SSIM")
+        plt.title('SSIM over iterations')
+        plt.legend()
+        plt.show()
 
     def loss_sr(self, param, model_condition, xhat):
         input = model_condition["input"]
